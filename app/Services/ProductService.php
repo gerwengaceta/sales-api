@@ -22,8 +22,28 @@ class ProductService
         return $product->fresh();
     }
 
+    public function deleteProduct(Product $product): bool
+    {
+        return $product->delete();
+    }
+
     protected function generateSku(array $data): string
     {
         return strtoupper(substr($data['product_name'], 0, 3)) . '-' . time();
     }
-}
+
+    public function getProducts(array $filters = [])
+    {
+        $query = Product::query();
+
+        if (!empty($filters['search'])) {
+            $query->where('product_name', 'like', '%' . $filters['search'] . '%');
+        }
+
+        if (!empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        return $query->paginate(20);
+        }
+    }
