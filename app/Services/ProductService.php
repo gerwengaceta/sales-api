@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use Illuminate\Validation\ValidationException;
 
 class ProductService
 {
@@ -18,6 +19,27 @@ class ProductService
     public function updateProduct(Product $product, array $data): Product
     {
         $product->update($data);
+
+        return $product->fresh();
+    }
+
+    public function deductStock(Product $product, int $quantity): Product
+    {
+        if ($quantity < 1) {
+            throw ValidationException::withMessages([
+                'quantity' => ['The deducted quantity must be at least 1.'],
+            ]);
+        }
+
+        $updated = Product::where('id', $product->id)
+            ->where('stock_quantity', '>=', $quantity)
+            ->decrement('stock_quantity', $quantity);
+
+        if (! $updated) {
+            throw ValidationException::withMessages([
+                'quantity' => ['Requested quantity exceeds available stock.'],
+            ]);
+        }
 
         return $product->fresh();
     }
